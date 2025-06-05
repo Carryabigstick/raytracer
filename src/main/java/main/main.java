@@ -5,13 +5,14 @@ import java.io.IOException;
 import util.color;
 import util.ray;
 import util.vec3;
+import static util.vec3.dot;
 
 public class main {
 
     public static void main(String[] args) {
 
         double aspect_ratio = 16.0 / 9.0;
-        int image_width = 400;
+        int image_width = 1920;
 
         // calculate height based on width and the given aspect_ratio
         int image_height = (int)(image_width / aspect_ratio);
@@ -19,7 +20,8 @@ public class main {
 
         // Camera
 
-        double focal_length = 1.0;
+        // default 1.0
+        double focal_length = 5;
 
         // for now, 2.0 is arbitrary
         double viewport_height = 2.0;
@@ -89,7 +91,7 @@ public class main {
 //                        0.0
 //                    );
 
-                    bw.write(pixel_color.write_color().toString());
+                    bw.write(pixel_color.write_color());
 
                 }
             }
@@ -101,7 +103,7 @@ public class main {
 
         } catch (IOException e)
         {
-            System.out.println("An Error Occured: " + e.getMessage());
+            System.out.println("An Error Occurred: " + e.getMessage());
         }
 
 
@@ -109,15 +111,50 @@ public class main {
 
     public static color ray_color(ray r)
     {
+        color final_color;
 
+        if(hit_sphere(new vec3(0.3,0,-3),0.1,r))
+        {
+            return new color(0.5137254902,0.2039215686,0.9215686275);
+        }
+
+        if(hit_sphere(new vec3(-0.3,0,-3),0.2,r))
+        {
+            return new color(1,0,0.1);
+        }
 
         vec3 unit_direction = vec3.unit_vector(r.dir);
-        var a = 0.5 * (unit_direction.x() + 1.0);
 
-        color startVal = new color(0.0,0.0,0.0);
+        // converts range of unit_direction from [-1,1] to [0,1]
+        var a = 0.5 * (unit_direction.y() + 1.0);
+
+        color startVal = new color(1,1,1);
         color endVal = new color(0.5,0.7,1.0);
 
-        return (1.0 - a) * startVal + a * endVal;
+
+        // smooth interpolation
+        a = a * a * (3 - 2 * a);
+        final_color = (1 - a) * startVal + a * endVal;
+
+//        final_color = (1.0 - a) * startVal + a * endVal;
+
+        return final_color;
+    }
+
+    public static Boolean hit_sphere(vec3 center, double radius, final ray r)
+    {
+        // point - point3 = vec3
+        // vec pointing from ray to center
+        vec3 oc = center - r.origin();
+
+        var a = dot(r.direction(), r.direction());
+        var b = -2.0 * dot(r.direction(), oc);
+        var c = dot(oc, oc) - radius * radius;
+
+        var discriminant = Math.sqrt(b * b - 4.0 * a * c);
+
+        return (discriminant >= 0);
+
     }
 
 }

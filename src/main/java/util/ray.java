@@ -3,9 +3,11 @@ package util;
 public class ray {
 
     // point3
+    // Q value
     public vec3 orig;
 
     // vec3
+    // d value
     public vec3 dir;
 
 
@@ -16,10 +18,20 @@ public class ray {
     }
 
 
-    // returns the function P(t)
+    // returns the function P(t) = Q + td
     public vec3 at(double t)
     {
         return (orig + (dir * t));
+    }
+
+    public vec3 origin()
+    {
+        return this.orig;
+    }
+
+    public vec3 direction()
+    {
+        return this.dir;
     }
 
 }

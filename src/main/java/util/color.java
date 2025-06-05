@@ -12,7 +12,7 @@ public class color extends vec3
         super(e0,e1,e2);
     }
 
-    public color write_color()
+    public String write_color()
     {
         double r = this.x();
         double g = this.y();
@@ -23,8 +23,9 @@ public class color extends vec3
         rbyte = (int) (255.999 * r);
         gbyte = (int) (255.999 * g);
         bbyte = (int) (255.999 * b);
-        return this;
+        return this.toString();
     }
+
 
     public int getRbyte() {
         return rbyte;
