@@ -6,13 +6,16 @@ import util.color;
 import util.ray;
 import util.vec3;
 import static util.vec3.dot;
+import static util.vec3.unit_vector;
+import geometry.Sphere;
+import geometry.HitRecord;
 
 public class main {
 
     public static void main(String[] args) {
 
         double aspect_ratio = 16.0 / 9.0;
-        int image_width = 1920;
+        int image_width = 400;
 
         // calculate height based on width and the given aspect_ratio
         int image_height = (int)(image_width / aspect_ratio);
@@ -21,7 +24,7 @@ public class main {
         // Camera
 
         // default 1.0
-        double focal_length = 5;
+        double focal_length = 1.0;
 
         // for now, 2.0 is arbitrary
         double viewport_height = 2.0;
@@ -45,11 +48,7 @@ public class main {
         vec3 viewport_upper_left = camera_center
             - new vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
 
-
-
         vec3 pixel00_loc = (viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v));
-
-
 
 
         // Render
@@ -78,25 +77,17 @@ public class main {
                     // Subtract two point3s → get a vec3 (the displacement between them)
                     vec3 ray_direction = pixel_center - camera_center;
 
-                    // creates grid of vectors pointing to all pixels
+                    // creates ray for current pixel, pointing from camera to pixel
                     ray r = new ray(camera_center , ray_direction);
-
 
                     // colors each pixel based on result of ray color
                     color pixel_color = ray_color(r);
-
-//                    color pixel_color = new color(
-//                        (double)i / (image_width-1),
-//                        (double)j / (image_height-1),
-//                        0.0
-//                    );
 
                     bw.write(pixel_color.write_color());
 
                 }
             }
             System.out.println("Done.");
-
 
             bw.close();
 
@@ -113,14 +104,21 @@ public class main {
     {
         color final_color;
 
-        if(hit_sphere(new vec3(0.3,0,-3),0.1,r))
-        {
-            return new color(0.5137254902,0.2039215686,0.9215686275);
-        }
+        HitRecord rec = new HitRecord();
 
-        if(hit_sphere(new vec3(-0.3,0,-3),0.2,r))
+        geometry.Sphere sphere01 = new Sphere(new vec3(0,0,-1),0.5);
+
+        sphere01.hit(r,0,1000,rec);
+
+        var t = rec.t;
+
+        if(t > 0.0)
         {
-            return new color(1,0,0.1);
+            // N is a vector because point - point = vector
+            vec3 N = unit_vector(r.at(t) - sphere01.center);
+
+            // remaps [-1,1] range of unit_vector N to rgb range of [0,1]
+            return (0.5 * new color(N.x()+1,N.y()+1,N.z()+1));
         }
 
         vec3 unit_direction = vec3.unit_vector(r.dir);
@@ -131,30 +129,12 @@ public class main {
         color startVal = new color(1,1,1);
         color endVal = new color(0.5,0.7,1.0);
 
-
         // smooth interpolation
         a = a * a * (3 - 2 * a);
         final_color = (1 - a) * startVal + a * endVal;
 
-//        final_color = (1.0 - a) * startVal + a * endVal;
 
         return final_color;
-    }
-
-    public static Boolean hit_sphere(vec3 center, double radius, final ray r)
-    {
-        // point - point3 = vec3
-        // vec pointing from ray to center
-        vec3 oc = center - r.origin();
-
-        var a = dot(r.direction(), r.direction());
-        var b = -2.0 * dot(r.direction(), oc);
-        var c = dot(oc, oc) - radius * radius;
-
-        var discriminant = Math.sqrt(b * b - 4.0 * a * c);
-
-        return (discriminant >= 0);
-
     }
 
 }
