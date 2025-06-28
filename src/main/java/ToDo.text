@@ -4,3 +4,7 @@
 DONE
 
 - Find way to resize file as window scales?
+
+
+
+- Multithreaded support - split up scan lines to different threads

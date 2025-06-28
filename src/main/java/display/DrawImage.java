@@ -9,7 +9,7 @@ public class DrawImage {
 
     public int width;
     public int height;
-    public BufferedImage image;
+    public final BufferedImage image;
     private final JPanel imagePanel;
 
 
@@ -45,10 +45,13 @@ public class DrawImage {
 
 
 
-    public void refresh()
+    public void refresh(int delay)
     {
         SwingUtilities.invokeLater(imagePanel::repaint);
-        try{Thread.sleep(1);} catch(InterruptedException ignored){}
+        if(delay > 0)
+        {
+            try{Thread.sleep(delay);} catch(InterruptedException ignored){}
+        }
     }
 
     public void setPixel(int x,int y,util.color color)
@@ -62,9 +65,6 @@ public class DrawImage {
         }
 
     }
-
-
-
 
 
 }
