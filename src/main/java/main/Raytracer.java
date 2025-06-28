@@ -1,8 +1,6 @@
 package main;
 
-import util.color;
-import util.ray;
-import util.vec3;
+import util.*;
 import geometry.*;
 import static util.common.infinity;
 
@@ -148,7 +146,7 @@ public class Raytracer implements Runnable
         // Hit Object
         // if an object is hit, return the normal mapping as color data
         // which will result in it be mapped as UVs are by default
-        if(world.hit(r, 0, infinity(), rec))
+        if(world.hit(r,new Interval(0,infinity()), rec))
         {
 
             return 0.5 * (new color(1,1,1) + rec.normal);

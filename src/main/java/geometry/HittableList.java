@@ -1,6 +1,7 @@
 package geometry;
 
 import java.util.ArrayList;
+import util.Interval;
 
 public class HittableList implements hittable
 {
@@ -32,15 +33,15 @@ public class HittableList implements hittable
     // loop through all hittable objects and well, compute hitting them.
     // Keep track of closest hit because we want the closest object to be on top.
     @Override
-    public boolean hit(final util.ray r, double ray_tmin, double ray_tmax, HitRecord rec)
+    public boolean hit(final util.ray r, Interval ray_t , HitRecord rec)
     {
         HitRecord tempRec = new HitRecord();
         boolean hitAnything = false;
-        double closestSoFar = ray_tmax;
+        double closestSoFar = ray_t.max;
 
         for(hittable object : hittables)
         {
-            if(object.hit(r,ray_tmin,closestSoFar,tempRec))
+            if(object.hit(r, new Interval(ray_t.min,closestSoFar),tempRec))
             {
                 hitAnything = true;
                 closestSoFar = tempRec.t;

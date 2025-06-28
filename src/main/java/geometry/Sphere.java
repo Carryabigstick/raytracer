@@ -18,7 +18,7 @@ public class Sphere implements hittable
         this.radius = Math.max(0,radius);
     }
 
-    public boolean hit(ray r, double ray_tmin, double ray_tmax, HitRecord rec)
+    public boolean hit(ray r, util.Interval ray_t, HitRecord rec)
     {
         // point - point3 = vec3
         // vec pointing from ray to center
@@ -40,12 +40,15 @@ public class Sphere implements hittable
         // rooted discriminant
         var sqrtd = Math.sqrt(discriminant);
 
-        // find nearest square root
+        // find nearest square root.
+        // root is the FIRST root, the if statement only runs if the first root
+        // is outside the rage, we need to check if the second root works.
         var root =(h - sqrtd) / a;
-        if(root <= ray_tmin || root >= ray_tmax)
+        if(!ray_t.surrounds(root))
         {
             root = ((h + sqrtd) / a);
-            if(root <= ray_tmin || root >= ray_tmax)
+            // check if the second root is valid
+            if(!ray_t.surrounds(root))
             {
                 return false;
             }
