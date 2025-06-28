@@ -3,8 +3,8 @@ package main;
 import util.color;
 import util.ray;
 import util.vec3;
-import geometry.HitRecord;
-import geometry.Sphere;
+import geometry.*;
+import static util.common.infinity;
 
 import display.DrawImage;
 
@@ -32,6 +32,8 @@ public class Raytracer implements Runnable
     public vec3 viewport_upper_left;
     public vec3 pixel00_loc;
 
+    public HittableList world;
+
     DrawImage output;
     //
     public Raytracer()
@@ -58,11 +60,20 @@ public class Raytracer implements Runnable
 
     public void init()
     {
+        // Image
         aspect_ratio = 16.0 / 9.0;
 
         // calculate height based on width and the given aspect_ratio
         image_height = (int)(image_width / aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
+
+
+        // World
+
+        world = new HittableList();
+
+        world.add(new Sphere(new vec3(0,0,-1),0.5) );
+        world.add(new Sphere(new vec3(0,-100.5,-1),100) );
 
 
         // Camera
@@ -115,62 +126,86 @@ public class Raytracer implements Runnable
                 ray r = new ray(camera_center , ray_direction);
 
                 // colors each pixel based on result of ray color
-                color pixel_color = ray_color(r);
+                // passes in world so we can compare every ray
+                // against what is in our world.
+                color pixel_color = ray_color(r,world);
 
                 output.setPixel(i,image_height-j-1, pixel_color);
 
             }
-
             output.refresh();
         }
         System.out.println("Rendering Complete.");
-
-
-
-
-
     }
 
 
-
-
-
-    public static color ray_color(ray r)
+    // Determines ray color taking in the current ray and world - the
+    // list of hittable objects
+    public static color ray_color(ray r, HittableList world)
     {
-        color final_color;
-
         HitRecord rec = new HitRecord();
 
-        geometry.Sphere sphere01 = new Sphere(new vec3(0,0,-1),0.5);
-
-        sphere01.hit(r,0,1000,rec);
-
-        var t = rec.t;
-
-        if(t > 0.0)
+        // Hit Object
+        // if an object is hit, return the normal mapping as color data
+        // which will result in it be mapped as UVs are by default
+        if(world.hit(r, 0, infinity(), rec))
         {
-            // N is a vector because point - point = vector
-            vec3 N = unit_vector(r.at(t) - sphere01.center);
 
-            // remaps [-1,1] range of unit_vector N to rgb range of [0,1]
-            return (0.5 * new color(N.x()+1,N.y()+1,N.z()+1));
+            return 0.5 * (new color(1,1,1) + rec.normal);
         }
 
-        vec3 unit_direction = vec3.unit_vector(r.dir);
+        // Not hit object
 
-        // converts range of unit_direction from [-1,1] to [0,1]
-        var a = 0.5 * (unit_direction.y() + 1.0);
+        vec3 unitDirection = unit_vector(r.direction());
+        var a = 0.5*(unitDirection.y() + 1.0);
 
+        // Creates color gradient for background
         color startVal = new color(1,1,1);
         color endVal = new color(0.5,0.7,1.0);
 
-        // smooth interpolation
-        a = a * a * (3 - 2 * a);
-        final_color = (1 - a) * startVal + a * endVal;
-
-
-        return final_color;
+        return (1.0-a) * startVal + a * endVal;
     }
+
+
+
+
+    // DEPRECIATED
+//    public static color ray_color(ray r)
+//    {
+//        color final_color;
+//
+//        HitRecord rec = new HitRecord();
+//
+//        geometry.Sphere sphere01 = new Sphere(new vec3(0,0,-1),0.5);
+//
+//        sphere01.hit(r,0,1000,rec);
+//
+//        var t = rec.t;
+//
+//        if(t > 0.0)
+//        {
+//            // N is a vector because point - point = vector
+//            vec3 N = unit_vector(r.at(t) - sphere01.center);
+//
+//            // remaps [-1,1] range of unit_vector N to rgb range of [0,1]
+//            return (0.5 * new color(N.x()+1,N.y()+1,N.z()+1));
+//        }
+//
+//        vec3 unit_direction = vec3.unit_vector(r.dir);
+//
+//        // converts range of unit_direction from [-1,1] to [0,1]
+//        var a = 0.5 * (unit_direction.y() + 1.0);
+//
+//        color startVal = new color(1,1,1);
+//        color endVal = new color(0.5,0.7,1.0);
+//
+//        // smooth interpolation
+//        a = a * a * (3 - 2 * a);
+//        final_color = (1 - a) * startVal + a * endVal;
+//
+//
+//        return final_color;
+//    }
 
 
 }

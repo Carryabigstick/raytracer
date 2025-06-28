@@ -72,6 +72,10 @@ public class color extends vec3
         return new color(x() + v.x(), y() + v.y(), z() + v.z());
     }
 
+    public color plus(vec3 v) {
+        return new color(x() + v.x(), y() + v.y(), z() + v.z());
+    }
+
     public color plus(int j)
     {
         return new color(x() + j, y() + j, z() + j);
