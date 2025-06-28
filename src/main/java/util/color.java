@@ -1,5 +1,7 @@
 package util;
 
+import util.Interval;
+
 public class color extends vec3
 {
 
@@ -20,9 +22,12 @@ public class color extends vec3
 
         // Translate the [0,1] component values to the byte range [0,255].
         // scales to integer values between 0-255 to work with PPM format
-        rbyte = (int) (255.999 * r);
-        gbyte = (int) (255.999 * g);
-        bbyte = (int) (255.999 * b);
+
+        // Creates an interval between 0-1 to clamp rgb values
+        Interval intensity = new Interval(0.000,0.999);
+        rbyte = (int) (256 * intensity.clamp(r));
+        gbyte = (int) (256 * intensity.clamp(g));
+        bbyte = (int) (256 * intensity.clamp(b));
 
     }
 

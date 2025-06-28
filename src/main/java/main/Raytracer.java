@@ -4,6 +4,7 @@ import util.*;
 import geometry.*;
 import static util.common.infinity;
 import static util.vec3.unit_vector;
+import static util.common.randomDouble;
 
 import display.DrawImage;
 
@@ -29,6 +30,11 @@ public class Raytracer implements Runnable
     // Output stream
     DrawImage output;
 
+
+    public int samples_per_pixel = 15; // Count of random samples for each pixel
+    private double pixel_samples_scale; // Color scale factor for a sum of pixel samples
+
+
     public Raytracer(int image_width, int image_height, double aspect_ratio, DrawImage output)
     {
         focal_length = 1.0;
@@ -43,6 +49,8 @@ public class Raytracer implements Runnable
     public void init()
     {
         // Camera
+
+        pixel_samples_scale = 1.0 / samples_per_pixel;
 
         // for now, 2.0 is arbitrary
         double viewport_height = 2.0;
@@ -87,22 +95,34 @@ public class Raytracer implements Runnable
 
             for(int i = 0; i < image_width; i++)
             {
-                // point
-                vec3 pixel_center = (pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v));
 
-                // calculates the direction
-                // Subtract two point3s → get a vec3 (the displacement between them)
-                vec3 ray_direction = pixel_center - camera_center;
+                color pixel_color = new color(0,0,0);
 
-                // creates ray for current pixel, pointing from camera to pixel
-                ray r = new ray(camera_center , ray_direction);
+                for(int sample = 0; sample < samples_per_pixel; sample++)
+                {
+                    ray r = get_ray(i,j);
+                    // adds up all samples
+                    pixel_color += ray_color(r,world);
+                }
 
-                // colors each pixel based on result of ray color
-                // passes in world so we can compare every ray
-                // against what is in our world.
-                color pixel_color = ray_color(r,world);
-
-                output.setPixel(i,image_height-j-1, pixel_color);
+//                // point
+//                vec3 pixel_center = (pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v));
+//
+//                // calculates the direction
+//                // Subtract two point3s → get a vec3 (the displacement between them)
+//                vec3 ray_direction = pixel_center - camera_center;
+//
+//                // creates ray for current pixel, pointing from camera to pixel
+//                ray r = new ray(camera_center , ray_direction);
+//
+//                // colors each pixel based on result of ray color
+//                // passes in world so we can compare every ray
+//                // against what is in our world.
+//                color pixel_color = ray_color(r,world);
+//
+                // pixel_color * pixel_samples_scale averages out the summed samples
+                // it is pretty easy to think about we just average all the samples per pixel
+                output.setPixel(i,image_height-j-1, pixel_color * pixel_samples_scale );
 
             }
             output.refresh(0);
@@ -138,6 +158,30 @@ public class Raytracer implements Runnable
         return (1.0-a) * startVal + a * endVal;
     }
 
+    public ray get_ray(int i, int j)
+    {
+        // Construct a camera ray coming from the origin and pointing at random points
+        // around pixel location i, j.
+
+        var offset = sample_square();
+        var pixel_sample = pixel00_loc
+            + ((i + offset.x()) * pixel_delta_u)
+            + ((j + offset.y()) * pixel_delta_v);
+
+        var ray_origin = camera_center;
+        // gets direction from camera center to 3D point
+        var ray_direction = pixel_sample - ray_origin;
+
+        return new ray(ray_origin,ray_direction);
+    }
+
+
+    public vec3 sample_square()
+    {
+        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+        return new util.vec3(randomDouble() - 0.5, randomDouble() - 0.5, 0);
+    }
+
 
 
     public void setOutput(DrawImage DrawnImage)
@@ -149,6 +193,7 @@ public class Raytracer implements Runnable
     {
         this.world = world;
     }
+
 
 
 
