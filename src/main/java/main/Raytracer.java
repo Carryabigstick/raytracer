@@ -3,6 +3,8 @@ package main;
 import util.*;
 import geometry.*;
 import static util.common.infinity;
+import static util.vec3.randomOnHemisphere;
+import static util.vec3.randomUnitVector;
 import static util.vec3.unit_vector;
 import static util.common.randomDouble;
 
@@ -30,9 +32,13 @@ public class Raytracer implements Runnable
     // Output stream
     DrawImage output;
 
-
-    public int samples_per_pixel = 15; // Count of random samples for each pixel
+    // anti aliasing parameters
+    public int samples_per_pixel = 50; // Count of random samples for each pixel
     private double pixel_samples_scale; // Color scale factor for a sum of pixel samples
+
+
+    // max bounce parameters
+    public int max_depth = 10;
 
 
     public Raytracer(int image_width, int image_height, double aspect_ratio, DrawImage output)
@@ -102,7 +108,7 @@ public class Raytracer implements Runnable
                 {
                     ray r = get_ray(i,j);
                     // adds up all samples
-                    pixel_color += ray_color(r,world);
+                    pixel_color += ray_color(r,max_depth,world);
                 }
 
 //                // point
@@ -126,25 +132,46 @@ public class Raytracer implements Runnable
 
             }
             output.refresh(0);
+
+//            long used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//            double usedMB = used / (1024.0 * 1024.0);
+//
+//            System.out.printf("\rUsed memory: %.2f MB", usedMB);
+//
+//            // Flush output to make sure it appears immediately
+//            System.out.flush();
+
         }
-        System.out.println("Rendering Complete.");
+        System.out.println("\nRendering Complete.");
     }
 
 
 
     // Determines ray color taking in the current ray and world - the
     // list of hittable objects
-    public static color ray_color(ray r, HittableList world)
+    public static color ray_color(ray r, int depth, HittableList world)
     {
+        // If we exceed bounce limit, no more light.
+        if(depth <= 0)
+        {
+            return new color(0,0,0);
+        }
+
+
         HitRecord rec = new HitRecord();
 
         // Hit Object
         // if an object is hit, return the normal mapping as color data
         // which will result in it be mapped as UVs are by default
-        if(world.hit(r,new Interval(0,infinity()), rec))
+        if(world.hit(r,new Interval(0.001,infinity()), rec))
         {
+            // True Lambertian reflection using math I don't understand
+            vec3 direction = rec.normal + randomUnitVector();
 
-            return 0.5 * (new color(1,1,1) + rec.normal);
+            // Old lambertian reflection method
+            // vec3 direction = randomOnHemisphere(rec.normal);
+
+            return 0.65 * ray_color(new ray(rec.p,direction),depth-1,world);
         }
 
         // Not hit object
@@ -157,6 +184,8 @@ public class Raytracer implements Runnable
 
         return (1.0-a) * startVal + a * endVal;
     }
+
+
 
     public ray get_ray(int i, int j)
     {

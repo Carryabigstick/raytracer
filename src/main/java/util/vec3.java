@@ -1,5 +1,7 @@
 package util;
 
+import static util.common.randomDouble;
+
 public class vec3 {
 
     public double[] e;
@@ -104,6 +106,49 @@ public class vec3 {
         return v / (v.length());
 
     }
+
+    public static vec3 random()
+    {
+        return new vec3(randomDouble(),randomDouble(),randomDouble());
+    }
+
+    public static vec3 random(double min, double max)
+    {
+        return new vec3(randomDouble(min,max),randomDouble(min,max),randomDouble(min,max));
+    }
+
+    public static vec3 randomUnitVector()
+    {
+        while (true)
+        {
+            // random vec
+            var p = vec3.random();
+            // length sqr
+            var lensq = p.length_squared();
+            if(1e-160 < lensq && lensq <= 1)
+            {
+                // normalize random vec
+                return p / Math.sqrt(lensq);
+            }
+        }
+    }
+
+    public static vec3 randomOnHemisphere(vec3 normal)
+    {
+        vec3 on_unit_sphere = randomUnitVector();
+        if(dot(on_unit_sphere,normal) > 0.0)
+        {
+            return on_unit_sphere;
+        }
+        else
+        {
+            return -on_unit_sphere;
+        }
+    }
+
+
+
+
 
     @Override
     public String toString()

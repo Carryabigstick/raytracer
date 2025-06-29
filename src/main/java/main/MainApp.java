@@ -23,8 +23,14 @@ public class MainApp
         world.add(new geometry.Sphere(new util.vec3(0,-100.5,-1),100) );
         RT.setWorld(world);
 
+        MemoryMonitor monitor = new MemoryMonitor();
+        monitor.start();
+
         Thread thread = new Thread(RT);
         thread.start();
+
+
+
 
 
 
