@@ -30,14 +30,18 @@ public class Raytracer implements Runnable
     // Output stream
     DrawImage output;
 
-
-    public int samples_per_pixel = 15; // Count of random samples for each pixel
+    // anti aliasing parameters
+    public int samples_per_pixel = 50; // Count of random samples for each pixel
     private double pixel_samples_scale; // Color scale factor for a sum of pixel samples
+
+
+    // max bounce parameters
+    public int max_depth = 10;
 
 
     public Raytracer(int image_width, int image_height, double aspect_ratio, DrawImage output)
     {
-        focal_length = 1.0;
+        focal_length = 1.5;
         this.image_width = image_width;
         this.image_height = image_height;
         this.aspect_ratio = aspect_ratio;
@@ -71,8 +75,7 @@ public class Raytracer implements Runnable
 
         // Calculate the location of the upper left pixel.
         // subtracts half of u and v because the vector camera center already starts halfway to each side
-        vec3 viewport_upper_left = camera_center
-            - new util.vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
+        var viewport_upper_left = camera_center - new util.vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
 
         pixel00_loc = (viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v));
 
@@ -98,18 +101,23 @@ public class Raytracer implements Runnable
 
                 color pixel_color = new color(0,0,0);
 
+                /**
+                 * Antialiasing looper.
+                 * Samples the same pixel multiple times and averages their
+                 * output to get smoother edges and more accurate results.
+                 */
                 for(int sample = 0; sample < samples_per_pixel; sample++)
                 {
                     ray r = get_ray(i,j);
                     // adds up all samples
-                    pixel_color += ray_color(r,world);
+                    pixel_color += ray_color(r,max_depth,world);
                 }
 
 //                // point
 //                vec3 pixel_center = (pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v));
 //
 //                // calculates the direction
-//                // Subtract two point3s → get a vec3 (the displacement between them)
+//                // Subtract two point 3s → get a vec3 (the displacement between them)
 //                vec3 ray_direction = pixel_center - camera_center;
 //
 //                // creates ray for current pixel, pointing from camera to pixel
@@ -126,25 +134,42 @@ public class Raytracer implements Runnable
 
             }
             output.refresh(0);
+
+
         }
-        System.out.println("Rendering Complete.");
+        System.out.println("\nRendering Complete.");
     }
 
 
 
     // Determines ray color taking in the current ray and world - the
     // list of hittable objects
-    public static color ray_color(ray r, HittableList world)
+    public static color ray_color(ray r, int depth, HittableList world)
     {
+        // If we exceed bounce limit, no more light.
+        if(depth <= 0)
+        {
+            return new color(0,0,0);
+        }
+
         HitRecord rec = new HitRecord();
+
 
         // Hit Object
         // if an object is hit, return the normal mapping as color data
         // which will result in it be mapped as UVs are by default
-        if(world.hit(r,new Interval(0,infinity()), rec))
+        if(world.hit(r,new Interval(0.001,infinity()), rec))
         {
+            // Initiates wrapped values so we can pass by reference
+            Wrapper<color> attenuation = new Wrapper<>();
+            Wrapper<ray> scattered = new Wrapper<>();
 
-            return 0.5 * (new color(1,1,1) + rec.normal);
+            if (rec.material.scatter(r, rec, attenuation, scattered)) {
+                return attenuation.value.multiply(ray_color(scattered.value, depth - 1,world));
+            }
+
+            // return blank if no scatter
+            return new color(0, 0, 0);
         }
 
         // Not hit object
@@ -157,6 +182,8 @@ public class Raytracer implements Runnable
 
         return (1.0-a) * startVal + a * endVal;
     }
+
+
 
     public ray get_ray(int i, int j)
     {
@@ -183,7 +210,6 @@ public class Raytracer implements Runnable
     }
 
 
-
     public void setOutput(DrawImage DrawnImage)
     {
         this.output = DrawnImage;
@@ -193,7 +219,6 @@ public class Raytracer implements Runnable
     {
         this.world = world;
     }
-
 
 
 

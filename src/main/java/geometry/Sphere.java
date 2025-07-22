@@ -1,6 +1,7 @@
 package geometry;
 import util.vec3;
 import util.ray;
+import material.Material;
 
 import static util.vec3.dot;
 
@@ -12,10 +13,14 @@ public class Sphere implements hittable
     // radius of sphere
     double radius;
 
-    public Sphere(vec3 center, double radius)
+    private final Material mat;
+
+    public Sphere(vec3 center, double radius, Material material)
     {
+        this.mat = material;
         this.center = center;
         this.radius = Math.max(0,radius);
+
     }
 
     public boolean hit(ray r, util.Interval ray_t, HitRecord rec)
@@ -59,6 +64,7 @@ public class Sphere implements hittable
         rec.p = r.at(rec.t);
         vec3 outward_normal = (rec.p - center) / radius;
         rec.set_face_normal(r,outward_normal);
+        rec.material = this.mat;
 
         return true;
     }

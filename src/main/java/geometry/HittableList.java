@@ -10,7 +10,7 @@ public class HittableList implements hittable
 
     public HittableList()
     {
-        this.hittables = new ArrayList<hittable>();
+        this.hittables = new ArrayList<>();
     }
 
     public HittableList(hittable obj)
@@ -51,6 +51,7 @@ public class HittableList implements hittable
                 rec.p = tempRec.p;
                 rec.normal = tempRec.normal;
                 rec.t = tempRec.t;
+                rec.material = tempRec.material;
                 rec.front_face = tempRec.front_face;
             }
 
