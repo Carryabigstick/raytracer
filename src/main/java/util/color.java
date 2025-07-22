@@ -1,10 +1,12 @@
 package util;
-
-import util.Interval;
-
 public class color extends vec3
 {
 
+    /**
+     * x, y and z values exist from vec3 subclass that
+     * correspond to r g and b values.
+     */
+    // translated bytes
     public int rbyte;
     public int gbyte;
     public int bbyte;
@@ -20,11 +22,15 @@ public class color extends vec3
         double g = this.y();
         double b = this.z();
 
+        r = linearToGamma(r);
+        g = linearToGamma(g);
+        b = linearToGamma(b);
+
         // Translate the [0,1] component values to the byte range [0,255].
         // scales to integer values between 0-255 to work with PPM format
 
         // Creates an interval between 0-1 to clamp rgb values
-        Interval intensity = new Interval(0.000,0.999);
+        Interval intensity = new Interval(0.000,0.9999);
         rbyte = (int) (256 * intensity.clamp(r));
         gbyte = (int) (256 * intensity.clamp(g));
         bbyte = (int) (256 * intensity.clamp(b));
@@ -43,28 +49,13 @@ public class color extends vec3
     }
 
 
-    public void setRbyte(int rbyte) {
-        this.rbyte = rbyte;
-    }
-
-
     public int getGbyte() {
         return gbyte;
     }
 
 
-    public void setGbyte(int gbyte) {
-        this.gbyte = gbyte;
-    }
-
-
     public int getBbyte() {
         return bbyte;
-    }
-
-
-    public void setBbyte(int bbyte) {
-        this.bbyte = bbyte;
     }
 
 
@@ -96,6 +87,11 @@ public class color extends vec3
         return new color(x() * t, y() * t, z() * t);
     }
 
+    public color multiply(color c)
+    {
+        return new color(e[0] * c.e[0], e[1] * c.e[1], e[2] * c.e[2]);
+    }
+
     public color div(double t)
     {
         return new color(x() / t, y() / t, z() / t);
@@ -104,6 +100,16 @@ public class color extends vec3
     public color unaryMinus()
     {
         return this.times(-1);
+    }
+
+    double linearToGamma(double linear_component)
+    {
+        if(linear_component > 0)
+        {
+            return Math.sqrt(linear_component);
+        }
+
+        return 0.0;
     }
 
 

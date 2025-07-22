@@ -3,8 +3,6 @@ package main;
 import util.*;
 import geometry.*;
 import static util.common.infinity;
-import static util.vec3.randomOnHemisphere;
-import static util.vec3.randomUnitVector;
 import static util.vec3.unit_vector;
 import static util.common.randomDouble;
 
@@ -43,7 +41,7 @@ public class Raytracer implements Runnable
 
     public Raytracer(int image_width, int image_height, double aspect_ratio, DrawImage output)
     {
-        focal_length = 1.0;
+        focal_length = 1.5;
         this.image_width = image_width;
         this.image_height = image_height;
         this.aspect_ratio = aspect_ratio;
@@ -77,8 +75,7 @@ public class Raytracer implements Runnable
 
         // Calculate the location of the upper left pixel.
         // subtracts half of u and v because the vector camera center already starts halfway to each side
-        vec3 viewport_upper_left = camera_center
-            - new util.vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
+        var viewport_upper_left = camera_center - new util.vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
 
         pixel00_loc = (viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v));
 
@@ -104,6 +101,11 @@ public class Raytracer implements Runnable
 
                 color pixel_color = new color(0,0,0);
 
+                /**
+                 * Antialiasing looper.
+                 * Samples the same pixel multiple times and averages their
+                 * output to get smoother edges and more accurate results.
+                 */
                 for(int sample = 0; sample < samples_per_pixel; sample++)
                 {
                     ray r = get_ray(i,j);
@@ -115,7 +117,7 @@ public class Raytracer implements Runnable
 //                vec3 pixel_center = (pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v));
 //
 //                // calculates the direction
-//                // Subtract two point3s → get a vec3 (the displacement between them)
+//                // Subtract two point 3s → get a vec3 (the displacement between them)
 //                vec3 ray_direction = pixel_center - camera_center;
 //
 //                // creates ray for current pixel, pointing from camera to pixel
@@ -133,13 +135,6 @@ public class Raytracer implements Runnable
             }
             output.refresh(0);
 
-//            long used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-//            double usedMB = used / (1024.0 * 1024.0);
-//
-//            System.out.printf("\rUsed memory: %.2f MB", usedMB);
-//
-//            // Flush output to make sure it appears immediately
-//            System.out.flush();
 
         }
         System.out.println("\nRendering Complete.");
@@ -157,21 +152,24 @@ public class Raytracer implements Runnable
             return new color(0,0,0);
         }
 
-
         HitRecord rec = new HitRecord();
+
 
         // Hit Object
         // if an object is hit, return the normal mapping as color data
         // which will result in it be mapped as UVs are by default
         if(world.hit(r,new Interval(0.001,infinity()), rec))
         {
-            // True Lambertian reflection using math I don't understand
-            vec3 direction = rec.normal + randomUnitVector();
+            // Initiates wrapped values so we can pass by reference
+            Wrapper<color> attenuation = new Wrapper<>();
+            Wrapper<ray> scattered = new Wrapper<>();
 
-            // Old lambertian reflection method
-            // vec3 direction = randomOnHemisphere(rec.normal);
+            if (rec.material.scatter(r, rec, attenuation, scattered)) {
+                return attenuation.value.multiply(ray_color(scattered.value, depth - 1,world));
+            }
 
-            return 0.65 * ray_color(new ray(rec.p,direction),depth-1,world);
+            // return blank if no scatter
+            return new color(0, 0, 0);
         }
 
         // Not hit object
@@ -212,7 +210,6 @@ public class Raytracer implements Runnable
     }
 
 
-
     public void setOutput(DrawImage DrawnImage)
     {
         this.output = DrawnImage;
@@ -222,7 +219,6 @@ public class Raytracer implements Runnable
     {
         this.world = world;
     }
-
 
 
 

@@ -17,6 +17,14 @@ public class ray {
         this.dir = direction;
     }
 
+    public ray(ray other)
+    {
+        this.orig = other.orig;
+        this.dir = other.dir;
+    }
+
+
+
 
     // returns the function P(t) = Q + td
     public vec3 at(double t)
@@ -32,6 +40,17 @@ public class ray {
     public vec3 direction()
     {
         return this.dir;
+    }
+
+    public void set(ray other) {
+        this.orig = new vec3(other.orig);
+        this.dir = new vec3(other.dir);
+    }
+
+    public void set(vec3 origin, vec3 direction)
+    {
+        this.orig = new vec3(origin);
+        this.dir = new vec3(direction);
     }
 
 }

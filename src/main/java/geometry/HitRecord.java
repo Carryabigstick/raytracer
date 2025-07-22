@@ -1,6 +1,7 @@
 package geometry;
 import util.vec3;
 import util.ray;
+import material.*;
 
 import static util.vec3.dot;
 
@@ -11,6 +12,9 @@ public class HitRecord
 
     // normal vector
     public vec3 normal;
+
+    // Material
+    public Material material;
 
     // length along vector in which we reach our point
     public double t;
@@ -32,6 +36,13 @@ public class HitRecord
         {
             normal = -outward_normal;
         }
+    }
+
+    public void set(HitRecord rec)
+    {
+        this.p = new vec3(rec.p);
+        this.normal = new vec3(rec.normal);
+        this.material = rec.material;
     }
 
 

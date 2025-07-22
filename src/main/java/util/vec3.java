@@ -11,6 +11,13 @@ public class vec3 {
         e = new double[]{0.0,0.0,0.0};
     }
 
+    public vec3(vec3 v) {
+        this();
+        this.e[0] = v.e[0];
+        this.e[1] = v.e[1];
+        this.e[2] = v.e[2];
+    }
+
     public vec3(double e0, double e1, double e2)
     {
         e = new double[3];
@@ -84,6 +91,17 @@ public class vec3 {
             + this.e[2] * v.e[2];
     }
 
+    /**
+     * Checks if vector is near zero and returns false if so.
+     * Threshold is 1e-8
+     * @return boolean
+     */
+    public boolean near_zero()
+    {
+        var s = 1e-8;
+        return Math.abs(x()) < s && Math.abs(y()) < s && Math.abs(z()) < s;
+    }
+
     // Vector utility functions
 
     public static double dot(vec3 a, vec3 b)
@@ -146,6 +164,16 @@ public class vec3 {
         }
     }
 
+    /**
+     * Reflects vector v over vector n
+     * @param v vec
+     * @param n vec
+     * @return reflected vector
+     */
+    public static vec3 reflect(vec3 v, vec3 n)
+    {
+        return v - 2*dot(v,n)*n;
+    }
 
 
 
